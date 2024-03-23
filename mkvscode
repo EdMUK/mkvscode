@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 # Define the gi function
 gi () {
@@ -41,8 +41,22 @@ cd "$PROJECT_NAME"
 # Initialize Git repository
 git init
 
-# Create a .gitignore file using the gi command
-gi "$LANGUAGE" >.gitignore
+# Setup project based on the specified language
+case $LANGUAGE in
+    python)
+        # ... (Python setup remains the same)
+        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/python" > .gitignore
+        ;;
+    lua)
+        # ... (Lua setup remains the same)
+        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/lua" > .gitignore
+        ;;
+    *)
+        echo "Unsupported language: $LANGUAGE"
+        return 1
+        ;;
+esac
+
 
 # Create README.md with placeholders
 cat >README.md <<EOF
