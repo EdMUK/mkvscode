@@ -1,0 +1,145 @@
+#!/bin/zsh
+
+# Define the gi function
+gi () {
+	curl -fLw '\n' https://www.toptal.com/developers/gitignore/api/"${(j:,:)@}"
+}
+
+
+# Option to open in VS Code flag
+OPEN_IN_VSCODE=false
+
+# Check for optional flags
+while getopts ":o" opt; do
+  case $opt in
+    o)
+      OPEN_IN_VSCODE=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+# Shift off the options and optional --
+shift $((OPTIND-1))
+
+# Check if the required number of arguments are passed
+if [ "$#" -ne 2 ]; then
+	echo "Usage: $0 [-o] project_name language(py|lua)"
+	exit 1
+fi
+
+PROJECT_NAME=$1
+LANGUAGE=$2
+
+
+# Create project directory
+mkdir -p "$PROJECT_NAME"
+cd "$PROJECT_NAME"
+
+# Initialize Git repository
+git init
+
+# Create a .gitignore file using the gi command
+gi "$LANGUAGE" >.gitignore
+
+# Create README.md with placeholders
+cat >README.md <<EOF
+# $PROJECT_NAME
+
+## About
+
+<Placeholder for project about section>
+
+## Installation
+
+<Placeholder for installation instructions>
+
+## Usage
+
+<Placeholder for usage instructions>
+
+## Notes
+
+<Placeholder for additional notes>
+EOF
+
+# Create VS Code workspace file
+cat >"$PROJECT_NAME.code-workspace" <<EOF
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {}
+}
+EOF
+
+# Setup project based on the specified language
+case $LANGUAGE in
+python)
+	# Create a Python file named after the project
+	cat >"$PROJECT_NAME.py" <<EOF
+def main():
+  print("Hello, $PROJECT_NAME!")
+
+if __name__ == "__main__":
+  main()
+EOF
+
+	# Create launch.json for Python debugging
+	mkdir -p .vscode
+	cat >.vscode/launch.json <<EOF
+{
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "\${workspaceFolder}/$PROJECT_NAME.py"
+        }
+    ]
+}
+EOF
+	;;
+lua)
+# Create a Lua file named after the project
+cat >"$PROJECT_NAME.lua" <<EOF
+print("Hello, $PROJECT_NAME!")
+EOF
+
+
+
+# Create launch.json for Lua debugging
+	mkdir -p .vscode
+	cat >.vscode/launch.json <<EOF
+{
+    "configurations": [
+        {
+            "type": "lua-local",
+            "request": "launch",
+            "name": "Debug",
+            "program": {
+                "lua": "lua5.4",
+                "file": "\${workspaceFolder}/$PROJECT_NAME.lua"
+            }
+        }
+    ]
+}
+EOF
+	;;
+esac
+
+git add *
+git commit -m "Initial commit"
+
+# At the end of your script, add the condition to open VS Code
+if $OPEN_IN_VSCODE; then
+    echo "Opening $PROJECT_NAME in VS Code..."
+    code "$PROJECT_NAME"
+fi
+
+echo "$PROJECT_NAME project setup complete."
+
