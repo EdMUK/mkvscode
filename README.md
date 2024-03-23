@@ -13,5 +13,5 @@ Helper script to create a visual studio code project. Give it a name an a langau
 ## Usage
 
 ```bash
-makevscode -o <project name> <language>
+mkvscode [-o] project_name language(py|lua)
 ```

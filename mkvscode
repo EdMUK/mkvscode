@@ -50,19 +50,19 @@ cat >README.md <<EOF
 
 ## About
 
-<Placeholder for project about section>
+Placeholder for project about section
 
 ## Installation
 
-<Placeholder for installation instructions>
+Placeholder for installation instructions
 
 ## Usage
 
-<Placeholder for usage instructions>
+Placeholder for usage instructions
 
 ## Notes
 
-<Placeholder for additional notes>
+Placeholder for additional notes
 EOF
 
 # Create VS Code workspace file
@@ -133,12 +133,14 @@ EOF
 esac
 
 git add *
+git add .vscode/*
+git add .gitignore
 git commit -m "Initial commit"
 
 # At the end of your script, add the condition to open VS Code
 if $OPEN_IN_VSCODE; then
     echo "Opening $PROJECT_NAME in VS Code..."
-    code "$PROJECT_NAME"
+    code "$PROJECT_NAME.code-workspace"
 fi
 
 echo "$PROJECT_NAME project setup complete."
