@@ -1,7 +1,7 @@
 
 # mkvscode
 
-`mkvscode` is a command-line tool for quickly setting up a Visual Studio Code project with predefined configurations for Python or Lua projects.
+`mkvscode` is a command-line tool for quickly setting up a Visual Studio Code project with predefined configurations for Python or Lua projects, as well as creating a git repo with the relevant .gitignore file.
 
 ## Features
 
