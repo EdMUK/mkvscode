@@ -19,7 +19,6 @@ create_project_folder() {
 
     # Initialize Git repository
     git init
-
 }
 
 # Option to open in VS Code flag
@@ -42,13 +41,12 @@ shift $((OPTIND-1))
 
 # Check if the required number of arguments are passed
 if [ "$#" -ne 2 ]; then
-	echo "Usage: $0 [-o] project_name language(python|lua)"
+	echo "Usage: $0 [-o] project_name language(python|lua|go)"
 	exit 1
 fi
 
 PROJECT_NAME=$1
 LANGUAGE=$2
-
 
 # Setup project based on the specified language
 case $LANGUAGE in
@@ -60,12 +58,15 @@ case $LANGUAGE in
         create_project_folder
         curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/lua" > .gitignore
         ;;
+    go)
+        create_project_folder
+        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/go" > .gitignore
+        ;;
     *)
         echo "Unsupported language: $LANGUAGE"
-        return 1
+        exit 1
         ;;
 esac
-
 
 # Create README.md with placeholders
 cat >README.md <<EOF
@@ -128,14 +129,12 @@ EOF
 EOF
 	;;
 lua)
-# Create a Lua file named after the project
-cat >"$PROJECT_NAME.lua" <<EOF
+	# Create a Lua file named after the project
+	cat >"$PROJECT_NAME.lua" <<EOF
 print("Hello, $PROJECT_NAME!")
 EOF
 
-
-
-# Create launch.json for Lua debugging
+	# Create launch.json for Lua debugging
 	mkdir -p .vscode
 	cat >.vscode/launch.json <<EOF
 {
@@ -148,6 +147,63 @@ EOF
                 "lua": "lua5.4",
                 "file": "\${workspaceFolder}/$PROJECT_NAME.lua"
             }
+        }
+    ]
+}
+EOF
+	;;
+go)
+	# Create a Go file named after the project
+	cat >main.go <<EOF
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, $PROJECT_NAME!")
+}
+EOF
+
+	# Create launch.json for Go debugging
+	mkdir -p .vscode
+	cat >.vscode/launch.json <<EOF
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Program",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "\${workspaceFolder}/main.go",
+            "cwd": "\${workspaceFolder}"
+        }
+    ]
+}
+EOF
+
+    # Create tasks.json for Go build and run
+    cat >.vscode/tasks.json <<EOF
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "go build -o $PROJECT_NAME main.go",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$go"]
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "./$PROJECT_NAME",
+            "group": "test",
+            "problemMatcher": [],
+            "dependsOn": "build"
         }
     ]
 }
@@ -167,4 +223,3 @@ if $OPEN_IN_VSCODE; then
 fi
 
 echo "$PROJECT_NAME project setup complete."
-
