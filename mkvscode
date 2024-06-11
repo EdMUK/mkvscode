@@ -5,6 +5,22 @@ gi () {
 	curl -fLw '\n' https://www.toptal.com/developers/gitignore/api/"${(j:,:)@}"
 }
 
+# Create project folder function
+create_project_folder() {
+    # Check if the project folder already exists
+    if [ -d "$PROJECT_NAME" ]; then
+        echo "Project folder $PROJECT_NAME already exists."
+        return 1
+    fi
+
+    # Create project directory
+    mkdir -p "$PROJECT_NAME"
+    cd "$PROJECT_NAME"
+
+    # Initialize Git repository
+    git init
+
+}
 
 # Option to open in VS Code flag
 OPEN_IN_VSCODE=false
@@ -26,7 +42,7 @@ shift $((OPTIND-1))
 
 # Check if the required number of arguments are passed
 if [ "$#" -ne 2 ]; then
-	echo "Usage: $0 [-o] project_name language(py|lua)"
+	echo "Usage: $0 [-o] project_name language(python|lua)"
 	exit 1
 fi
 
@@ -34,21 +50,14 @@ PROJECT_NAME=$1
 LANGUAGE=$2
 
 
-# Create project directory
-mkdir -p "$PROJECT_NAME"
-cd "$PROJECT_NAME"
-
-# Initialize Git repository
-git init
-
 # Setup project based on the specified language
 case $LANGUAGE in
     python)
-        # ... (Python setup remains the same)
+        create_project_folder
         curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/python" > .gitignore
         ;;
     lua)
-        # ... (Lua setup remains the same)
+        create_project_folder
         curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/lua" > .gitignore
         ;;
     *)
