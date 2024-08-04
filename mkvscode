@@ -2,7 +2,7 @@
 
 # Define the gi function
 gi () {
-	curl -fLw '\n' https://www.toptal.com/developers/gitignore/api/"${(j:,:)@}"
+    curl -fLw '\n' https://www.toptal.com/developers/gitignore/api/"${(j:,:)@}"
 }
 
 # Create project folder function
@@ -41,8 +41,8 @@ shift $((OPTIND-1))
 
 # Check if the required number of arguments are passed
 if [ "$#" -ne 2 ]; then
-	echo "Usage: $0 [-o] project_name language(python|lua|go)"
-	exit 1
+    echo "Usage: $0 [-o] project_name language(python|lua|go|cpp)"
+    exit 1
 fi
 
 PROJECT_NAME=$1
@@ -53,69 +53,19 @@ case $LANGUAGE in
     python)
         create_project_folder
         curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/python" > .gitignore
-        ;;
-    lua)
-        create_project_folder
-        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/lua" > .gitignore
-        ;;
-    go)
-        create_project_folder
-        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/go" > .gitignore
-        ;;
-    *)
-        echo "Unsupported language: $LANGUAGE"
-        exit 1
-        ;;
-esac
-
-# Create README.md with placeholders
-cat >README.md <<EOF
-# $PROJECT_NAME
-
-## About
-
-Placeholder for project about section
-
-## Installation
-
-Placeholder for installation instructions
-
-## Usage
-
-Placeholder for usage instructions
-
-## Notes
-
-Placeholder for additional notes
-EOF
-
-# Create VS Code workspace file
-cat >"$PROJECT_NAME.code-workspace" <<EOF
-{
-    "folders": [
-        {
-            "path": "."
-        }
-    ],
-    "settings": {}
-}
-EOF
-
-# Setup project based on the specified language
-case $LANGUAGE in
-python)
-	# Create a Python file named after the project
-	cat >"$PROJECT_NAME.py" <<EOF
+        
+        # Create a Python file named after the project
+        cat >"$PROJECT_NAME.py" <<EOF
 def main():
-  print("Hello, $PROJECT_NAME!")
+    print("Hello, $PROJECT_NAME!")
 
 if __name__ == "__main__":
-  main()
+    main()
 EOF
 
-	# Create launch.json for Python debugging
-	mkdir -p .vscode
-	cat >.vscode/launch.json <<EOF
+        # Create launch.json for Python debugging
+        mkdir -p .vscode
+        cat >.vscode/launch.json <<EOF
 {
     "configurations": [
         {
@@ -127,16 +77,19 @@ EOF
     ]
 }
 EOF
-	;;
-lua)
-	# Create a Lua file named after the project
-	cat >"$PROJECT_NAME.lua" <<EOF
+        ;;
+    lua)
+        create_project_folder
+        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/lua" > .gitignore
+        
+        # Create a Lua file named after the project
+        cat >"$PROJECT_NAME.lua" <<EOF
 print("Hello, $PROJECT_NAME!")
 EOF
 
-	# Create launch.json for Lua debugging
-	mkdir -p .vscode
-	cat >.vscode/launch.json <<EOF
+        # Create launch.json for Lua debugging
+        mkdir -p .vscode
+        cat >.vscode/launch.json <<EOF
 {
     "configurations": [
         {
@@ -151,10 +104,140 @@ EOF
     ]
 }
 EOF
-	;;
-go)
-	# Create a Go file named after the project
-	cat >main.go <<EOF
+        ;;
+    cpp)
+        create_project_folder
+        # C++ setup
+        mkdir -p src
+        cat >src/main.cpp <<EOF
+#include <iostream>
+
+int main() {
+    std::cout << "Hello, $PROJECT_NAME!" << std::endl;
+    return 0;
+}
+EOF
+
+        # Create xmake.lua without the after_build function
+        cat >xmake.lua <<EOF
+add_rules("mode.debug", "mode.release")
+
+-- Set project
+set_project("$PROJECT_NAME")
+
+-- Set languages
+set_languages("c++17")
+
+-- Set warnings
+set_warnings("all", "error")
+
+-- Define target
+target("$PROJECT_NAME")
+    set_kind("binary")
+    add_files("src/*.cpp")
+    
+    -- Set optimization
+    if is_mode("release") then
+        set_optimize("fastest")
+    elseif is_mode("debug") then
+        set_optimize("none")
+    end
+EOF
+
+        # Create .gitignore for C++ and xmake
+        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/c++,xmake" > .gitignore
+
+        # Create tasks.json for xmake build
+        mkdir -p .vscode
+        cat >.vscode/tasks.json <<EOF
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "xmake: build",
+            "command": "xmake",
+            "args": [],
+            "options": {
+                "cwd": "\${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
+EOF
+
+        # Create launch.json for C++ debugging
+        cat >.vscode/launch.json <<EOF
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "\${workspaceFolder}/build/linux/x86_64/debug/$PROJECT_NAME",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "\${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "xmake: build"
+        }
+    ]
+}
+EOF
+
+        # Configure the project in debug mode
+        xmake f -m debug
+
+        # Build the project
+        xmake -v
+
+        # Generate compile_commands.json separately
+        xmake project -k compile_commands
+
+        # Create c_cpp_properties.json
+        cat >.vscode/c_cpp_properties.json <<EOF
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "\${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "compileCommands": "\${workspaceFolder}/compile_commands.json"
+        }
+    ],
+    "version": 4
+}
+EOF
+        ;;
+    go)
+        create_project_folder
+        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/go" > .gitignore
+        
+        # Create a Go file named after the project
+        cat >main.go <<EOF
 package main
 
 import "fmt"
@@ -164,9 +247,9 @@ func main() {
 }
 EOF
 
-	# Create launch.json for Go debugging
-	mkdir -p .vscode
-	cat >.vscode/launch.json <<EOF
+        # Create launch.json for Go debugging
+        mkdir -p .vscode
+        cat >.vscode/launch.json <<EOF
 {
     "version": "0.2.0",
     "configurations": [
@@ -182,8 +265,8 @@ EOF
 }
 EOF
 
-    # Create tasks.json for Go build and run
-    cat >.vscode/tasks.json <<EOF
+        # Create tasks.json for Go build and run
+        cat >.vscode/tasks.json <<EOF
 {
     "version": "2.0.0",
     "tasks": [
@@ -208,12 +291,43 @@ EOF
     ]
 }
 EOF
-	;;
+        ;;
+    *)
+        echo "Unsupported language: $LANGUAGE"
+        exit 1
+        ;;
 esac
 
-git add *
-git add .vscode/*
-git add .gitignore
+# Create README.md with placeholders
+cat >README.md <<EOF
+# $PROJECT_NAME
+
+## About
+Placeholder for project about section
+
+## Installation
+Placeholder for installation instructions
+
+## Usage
+Placeholder for usage instructions
+
+## Notes
+Placeholder for additional notes
+EOF
+
+# Create VS Code workspace file
+cat >"$PROJECT_NAME.code-workspace" <<EOF
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {}
+}
+EOF
+
+git add .
 git commit -m "Initial commit"
 
 # At the end of your script, add the condition to open VS Code
