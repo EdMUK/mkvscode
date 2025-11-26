@@ -41,7 +41,7 @@ shift $((OPTIND-1))
 
 # Check if the required number of arguments are passed
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 [-o] project_name language(python|lua|go|cpp)"
+    echo "Usage: $0 [-o] project_name language(python|lua|go|cpp|svelte)"
     exit 1
 fi
 
@@ -287,6 +287,78 @@ EOF
             "group": "test",
             "problemMatcher": [],
             "dependsOn": "build"
+        }
+    ]
+}
+EOF
+        ;;
+    svelte)
+        if [ -d "$PROJECT_NAME" ]; then
+            echo "Project folder $PROJECT_NAME already exists."
+            exit 1
+        fi
+        
+        # Create SvelteKit project with TailwindCSS (v4)
+        # Using --add tailwindcss="plugins:none" to avoid prompts and install tailwind without extra plugins
+        npx sv create "$PROJECT_NAME" --template minimal --types ts --add tailwindcss="plugins:none" --install npm --no-dir-check
+        cd "$PROJECT_NAME"
+        git init
+        curl -fLw '\n' "https://www.toptal.com/developers/gitignore/api/node" > .gitignore
+        # Initialize shadcn-svelte
+        # Pointing to src/routes/layout.css as that's where sv puts the tailwind import
+        npx shadcn-svelte@latest init \
+            --base-color slate \
+            --css src/routes/layout.css \
+            --lib-alias '$lib' \
+            --components-alias '$lib/components' \
+            --utils-alias '$lib/utils' \
+            --ui-alias '$lib/components/ui' \
+            --hooks-alias '$lib/hooks'
+        
+        # Create tasks.json
+        mkdir -p .vscode
+        cat >.vscode/tasks.json <<'EOF'
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "dev",
+            "type": "npm",
+            "script": "dev",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "svelte",
+                "pattern": {
+                    "regexp": "^([^\\s].*):(\\d+):(\\d+):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": "Ready in \\d+ms"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "check",
+            "type": "npm",
+            "script": "check",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "build",
+            "type": "npm",
+            "script": "build",
+            "group": "build",
+            "problemMatcher": []
         }
     ]
 }
