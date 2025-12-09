@@ -225,7 +225,7 @@ EOF
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64",
-            "compileCommands": "\${workspaceFolder}/compile_commands.json"
+            "compileCommands": "\${workspaceFolder}/.vscode/compile_commands.json"
         }
     ],
     "version": 4

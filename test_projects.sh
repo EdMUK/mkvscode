@@ -7,7 +7,7 @@ fi
 
 cd test_projects
 
-../mkvscode lua_project lua
-../mkvscode python_project python
-../mkvscode cpp_project cpp
-../mkvscode csharp_project go
+../mkvscode.sh lua_project lua
+../mkvscode.sh python_project python
+../mkvscode.sh cpp_project cpp
+../mkvscode.sh csharp_project go
